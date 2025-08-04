@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Bravior The Game</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #gameContainer {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      height: 600px;
+      background: #444;
+      overflow: hidden;
+      border: 5px solid #fff;
+    }
+    #car {
+      position: absolute;
+      bottom: 10px;
+      width: 80px;
+      transition: left 0.1s;
+    }
+    .obstacle {
+      position: absolute;
+      top: -100px;
+      width: 80px;
+    }
+    #score, #lives {
+      color: white;
+      position: absolute;
+      top: 10px;
+      font-size: 20px;
+      z-index: 10;
+    }
+    #score { left: 10px; }
+    #lives { right: 10px; }
+    #gameOverScreen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+    #restartBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #startScreen {
+      position:absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      background:#000a;
+      color:white;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index: 15;
+    }
+    #startBtn {
+      padding:10px 20px;
+      font-size:18px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <div id="score">0 m</div>
+    <div id="lives">Életek: 3</div>
+    <img id="car" src="gyuri.png" style="left: 160px;">
+    <div id="gameOverScreen">
+      <h1>Game Over</h1>
+      <button id="restartBtn">Újra</button>
+    </div>
+    <div id="startScreen">
+      <h1>Kezdéshez nyomd meg a Start gombot!</h1>
+      <button id="startBtn">Start</button>
+    </div>
+  </div>
+
+  <audio id="bgMusic" src="music1.mp3" preload="auto" loop></audio>
+
+  <script>
+    const game = document.getElementById('gameContainer');
+    const car = document.getElementById('car');
+    const scoreDisplay = document.getElementById('score');
+    const livesDisplay = document.getElementById('lives');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const restartBtn = document.getElementById('restartBtn');
+    const startBtn = document.getElementById('startBtn');
+    const startScreen = document.getElementById('startScreen');
+    const bgMusic = document.getElementById('bgMusic');
+
+    const laneWidth = game.clientWidth / 3;
+    let carLane = 1;
+    let speed = 2;
+    let score = 0;
+    let lives = 3;
+    let isGameOver = false;
+    const obstacleImages = ['obstacle1.png', 'obstacle2.png', 'obstacle3.png'];
+
+    function moveCar() {
+      car.style.left = (game.clientWidth / 3 * carLane + laneWidth / 2 - 40) + 'px';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (isGameOver) return;
+      if (e.key === 'ArrowLeft' && carLane > 0) carLane--;
+      if (e.key === 'ArrowRight' && carLane < 2) carLane++;
+      moveCar();
+    });
+
+    document.addEventListener('touchstart', function (e) {
+      if (isGameOver) return;
+      const rect = game.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      if (x < game.clientWidth / 2 && carLane > 0) {
+        carLane--;
+      } else if (x >= game.clientWidth / 2 && carLane < 2) {
+        carLane++;
+      }
+      moveCar();
+    });
+
+    function createObstacle() {
+      const lanes = [0, 1, 2].sort(() => 0.5 - Math.random()).slice(0, 2);
+      for (let lane of lanes) {
+        const obs = document.createElement('img');
+        obs.src = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
+        obs.classList.add('obstacle');
+        obs.style.left = (laneWidth * lane + laneWidth / 2 - 40) + 'px';
+        game.appendChild(obs);
+      }
+    }
+
+    function checkCollision(obs) {
+      const carRect = car.getBoundingClientRect();
+      const obsRect = obs.getBoundingClientRect();
+      return !(
+        carRect.top > obsRect.bottom ||
+        carRect.bottom < obsRect.top ||
+        carRect.right < obsRect.left ||
+        carRect.left > obsRect.right
+      );
+    }
+
+    function gameLoop() {
+      if (isGameOver) return;
+      const obstacles = document.querySelectorAll('.obstacle');
+      obstacles.forEach(obs => {
+        let top = parseFloat(obs.style.top) || 0;
+        top += speed;
+        obs.style.top = top + 'px';
+
+        if (top > game.clientHeight) {
+          obs.remove();
+          score++;
+          scoreDisplay.textContent = `${score} m`;
+          if (score % 2 === 0) speed += 1;
+        }
+
+        if (checkCollision(obs)) {
+          obs.remove();
+          lives--;
+          livesDisplay.textContent = `Életek: ${lives}`;
+          if (lives <= 0) {
+            isGameOver = true;
+            gameOverScreen.style.display = 'flex';
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+          }
+        }
+      });
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    let obstacleInterval;
+
+    function startGame() {
+      bgMusic.volume = 1.0;
+      bgMusic.play().catch(() => {
+        // iOS hangvédelem: csak interakcióval indul
+        startBtn.addEventListener('click', () => bgMusic.play(), { once: true });
+      });
+
+      document.querySelectorAll('.obstacle').forEach(o => o.remove());
+      carLane = 1;
+      speed = 2;
+      score = 0;
+      lives = 3;
+      isGameOver = false;
+      scoreDisplay.textContent = '0 m';
+      livesDisplay.textContent = 'Életek: 3';
+      gameOverScreen.style.display = 'none';
+      moveCar();
+      clearInterval(obstacleInterval);
+      obstacleInterval = setInterval(() => {
+        const existing = document.querySelectorAll('.obstacle');
+        if (existing.length < 2) createObstacle();
+      }, 1800);
+      requestAnimationFrame(gameLoop);
+    }
+
+    restartBtn.addEventListener('click', () => startGame());
+    startBtn.addEventListener('click', () => {
+      startScreen.style.display = 'none';
+      startGame();
+    });
+
+    // Azonnali pozícionálás
+    moveCar();
+  </script>
+</body>
+</html>
