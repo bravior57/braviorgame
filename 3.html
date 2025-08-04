@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
   <title>Bravior The Game</title>
   <style>
     * { box-sizing: border-box; }
@@ -58,8 +60,8 @@
       justify-content: center;
       z-index: 20;
     }
-    #restartBtn {
-      margin-top: 20px;
+    #restartBtn, #backBtn {
+      margin-top: 10px;
       padding: 10px 20px;
       font-size: 18px;
       cursor: pointer;
@@ -91,6 +93,7 @@
     <div id="gameOverScreen">
       <h1>Game Over</h1>
       <button id="restartBtn">Újra</button>
+      <button id="backBtn">Főmenü</button>
     </div>
     <div id="startScreen">
       <h1>Kezdéshez nyomd meg a Start gombot!</h1>
@@ -107,6 +110,7 @@
     const livesDisplay = document.getElementById('lives');
     const gameOverScreen = document.getElementById('gameOverScreen');
     const restartBtn = document.getElementById('restartBtn');
+    const backBtn = document.getElementById('backBtn');
     const startBtn = document.getElementById('startBtn');
     const startScreen = document.getElementById('startScreen');
     const bgMusic = document.getElementById('bgMusic');
@@ -200,7 +204,6 @@
     function startGame() {
       bgMusic.volume = 1.0;
       bgMusic.play().catch(() => {
-        // iOS hangvédelem: csak interakcióval indul
         startBtn.addEventListener('click', () => bgMusic.play(), { once: true });
       });
 
@@ -223,12 +226,14 @@
     }
 
     restartBtn.addEventListener('click', () => startGame());
+    backBtn.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
     startBtn.addEventListener('click', () => {
       startScreen.style.display = 'none';
       startGame();
     });
 
-    // Azonnali pozícionálás
     moveCar();
   </script>
 </body>
