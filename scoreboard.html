@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bravior The Game - Scoreboard</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 400px;
+      background: #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #444;
+      text-align: left;
+    }
+    th {
+      background: #333;
+      font-size: 18px;
+    }
+    tbody tr:hover {
+      background: #444;
+    }
+    #backBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background: #555;
+      border: none;
+      border-radius: 6px;
+      color: white;
+    }
+    #loading {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Scoreboard</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Helyezés</th>
+        <th>Név</th>
+        <th>Távolság (m)</th>
+      </tr>
+    </thead>
+    <tbody id="scoreboardBody">
+      <tr><td colspan="3" id="loading">Betöltés...</td></tr>
+    </tbody>
+  </table>
+  <button id="backBtn">Vissza a játékhoz</button>
+
+  <!-- Firebase SDK-k -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA12TX2pwAKYd8oUGCP7_LebYQnzy7kbA4",
+      authDomain: "bravior-game.firebaseapp.com",
+      databaseURL: "https://bravior-game-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "bravior-game",
+      storageBucket: "bravior-game.firebasestorage.app",
+      messagingSenderId: "476754015617",
+      appId: "1:476754015617:web:ce3a672172f162ea006480"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const scoreboardBody = document.getElementById('scoreboardBody');
+    const backBtn = document.getElementById('backBtn');
+
+    backBtn.addEventListener('click', () => {
+      window.location.href = 'index.html';  // vagy ahova a játékod van
+    });
+
+    function loadScores() {
+      database.ref('scores').orderByChild('score').limitToLast(50).once('value')
+        .then(snapshot => {
+          const scores = [];
+          snapshot.forEach(childSnapshot => {
+            scores.push(childSnapshot.val());
+          });
+
+          // Rendezés csökkenő pontszám szerint (legnagyobb fent)
+          scores.sort((a, b) => b.score - a.score);
+
+          if (scores.length === 0) {
+            scoreboardBody.innerHTML = '<tr><td colspan="3">Nincs még eredmény.</td></tr>';
+            return;
+          }
+
+          scoreboardBody.innerHTML = '';
+          scores.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${item.name ? item.name : 'Ismeretlen'}</td>
+              <td>${item.score}</td>
+            `;
+            scoreboardBody.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          scoreboardBody.innerHTML = '<tr><td colspan="3">Hiba történt az adatok lekérésekor.</td></tr>';
+          console.error('Firebase read error:', err);
+        });
+    }
+
+    loadScores();
+  </script>
+</body>
+</html>
