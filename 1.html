@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
   <title>Bravior The Game</title>
   <style>
     * { box-sizing: border-box; }
@@ -73,15 +73,26 @@
       background:#000a;
       color:white;
       display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       z-index: 15;
+      padding: 20px;
     }
     #startBtn {
       padding:10px 20px;
       font-size:18px;
       cursor:pointer;
+    }
+    #playerName {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      width: 80%;
+      max-width: 300px;
+      border-radius: 5px;
+      border: none;
+      outline: none;
     }
   </style>
 </head>
@@ -89,13 +100,14 @@
   <div id="gameContainer">
     <div id="score">0 m</div>
     <div id="lives">Életek: 3</div>
-    <img id="car" src="gyuri.png" style="left: 160px;">
+    <img id="car" src="gyuri.png" style="left: 160px;" />
     <div id="gameOverScreen">
       <h1>Game Over</h1>
       <button id="restartBtn">Újra</button>
       <button id="backBtn">Főmenü</button>
     </div>
     <div id="startScreen">
+      <input type="text" id="playerName" placeholder="Add meg a neved" autocomplete="off" />
       <h1>Kezdéshez nyomd meg a Start gombot!</h1>
       <button id="startBtn">Start</button>
     </div>
@@ -103,7 +115,27 @@
 
   <audio id="bgMusic" src="music1.mp3" preload="auto" loop></audio>
 
+  <!-- Firebase SDK-k -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
   <script>
+    // Firebase konfiguráció
+    const firebaseConfig = {
+      apiKey: "AIzaSyA12TX2pwAKYd8oUGCP7_LebYQnzy7kbA4",
+      authDomain: "bravior-game.firebaseapp.com",
+      databaseURL: "https://bravior-game-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "bravior-game",
+      storageBucket: "bravior-game.firebasestorage.app",
+      messagingSenderId: "476754015617",
+      appId: "1:476754015617:web:ce3a672172f162ea006480"
+    };
+
+    // Firebase inicializálása
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // DOM elemek
     const game = document.getElementById('gameContainer');
     const car = document.getElementById('car');
     const scoreDisplay = document.getElementById('score');
@@ -114,7 +146,9 @@
     const startBtn = document.getElementById('startBtn');
     const startScreen = document.getElementById('startScreen');
     const bgMusic = document.getElementById('bgMusic');
+    const playerNameInput = document.getElementById('playerName');
 
+    let playerName = '';
     const laneWidth = game.clientWidth / 3;
     let carLane = 1;
     let speed = 2;
@@ -134,7 +168,7 @@
       moveCar();
     });
 
-    document.addEventListener('touchstart', function (e) {
+    document.addEventListener('touchstart', e => {
       if (isGameOver) return;
       const rect = game.getBoundingClientRect();
       const x = e.touches[0].clientX - rect.left;
@@ -192,6 +226,14 @@
             gameOverScreen.style.display = 'flex';
             bgMusic.pause();
             bgMusic.currentTime = 0;
+
+            // Firebase-be mentés Game Overkor
+            const playerData = {
+              name: playerName,
+              score: score,
+              timestamp: Date.now()
+            };
+            database.ref("scores").push(playerData);
           }
         }
       });
@@ -230,6 +272,12 @@
       window.location.href = 'index.html';
     });
     startBtn.addEventListener('click', () => {
+      const nameValue = playerNameInput.value.trim();
+      if (!nameValue) {
+        alert('Kérlek, add meg a neved a kezdéshez!');
+        return;
+      }
+      playerName = nameValue;
       startScreen.style.display = 'none';
       startGame();
     });

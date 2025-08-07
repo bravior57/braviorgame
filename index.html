@@ -78,9 +78,31 @@
     audio {
       display: none;
     }
+
+    /* Scoreboard gomb a jobb felső sarokban */
+    #scoreboardBtn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1000;
+      transition: background-color 0.3s ease;
+    }
+    #scoreboardBtn:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
+  <!-- Scoreboard gomb -->
+  <button id="scoreboardBtn" onclick="openScoreboard()">Scoreboard</button>
+
   <!-- Start Screen -->
   <div id="start-screen">
     <h2>Press a button</h2>
@@ -222,6 +244,10 @@
       startScreen.style.display = 'none';
       audio.play();
       showSlide(current);
+    }
+
+    function openScoreboard() {
+      window.open('scoreboard.html', '_blank');
     }
 
     document.addEventListener('keydown', (e) => {
